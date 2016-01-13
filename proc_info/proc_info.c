@@ -2,33 +2,36 @@
 #include<linux/module.h>
 #include<linux/debugfs.h>
 #include<linux/fs.h>
+#include<linux/seq_file.h>
 
 MODULE_LICENSE("GPL");
 
 static struct dentry *dir;
 
-static int ops_open(struct inode *inode, struct file *file)
+static ssize_t info_show(struct seq_file *m, void *data)
 {
-	file->private_data = inode->i_private;
+	seq_printf(m, "read claled");
 	return 0;
 }
 
-static ssize_t ops_read(struct file *file, char __user *buff, size_t len,
+static int info_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, info_show, NULL);
+}
+
+static ssize_t pid_write(struct file *file, char const __user *buff, size_t len,
 			loff_t *offset)
 {
 	return len;
 }
 
-static ssize_t ops_write(struct file *file, char const __user *buff, size_t len,
-			loff_t *offset)
-{
-	return len;
-}
+static struct file_operations pid_ops = {
+	.write = pid_write
+};
 
-static struct file_operations ops = {
-	.open = ops_open,
-	.read = ops_read,
-	.write = ops_write
+static struct file_operations info_ops = {
+	.open = info_open,
+	.read = seq_read
 };
 
 static int __init proc_info_init(void)
@@ -38,8 +41,8 @@ static int __init proc_info_init(void)
 	if (!dir)
 		return -ENODEV;
 
-	debugfs_create_file("pid", 0222, dir, (void *) "pid", &ops);
-	debugfs_create_file("info", 0444, dir, (void *) "info", &ops);
+	debugfs_create_file("pid", 0222, dir, (void *) "pid", &pid_ops);
+	debugfs_create_file("info", 0444, dir, (void *) "info", &info_ops);
  
 	return 0;
 }
