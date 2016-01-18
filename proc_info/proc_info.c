@@ -3,14 +3,24 @@
 #include<linux/debugfs.h>
 #include<linux/fs.h>
 #include<linux/seq_file.h>
+#include<asm/uaccess.h>
+#include<linux/sched.h>
 
 MODULE_LICENSE("GPL");
 
 static struct dentry *dir;
+static pid_t pid;
+static struct task_struct *task;
 
 static ssize_t info_show(struct seq_file *m, void *data)
 {
-	seq_printf(m, "read claled");
+	if (!pid || !task) {
+		seq_printf(m, "Please enter a valid PID\n");
+		return 0;
+	}
+
+	seq_printf(m, "Task: %s\n", task->comm);
+
 	return 0;
 }
 
@@ -22,6 +32,18 @@ static int info_open(struct inode *inode, struct file *file)
 static ssize_t pid_write(struct file *file, char const __user *buff, size_t len,
 			loff_t *offset)
 {
+	char tmp[16] = "";
+
+	if (copy_from_user(tmp, buff, len))
+		return -EFAULT;
+
+	if (!sscanf(tmp, "%d", &pid))
+		return -EINVAL;
+
+	task = pid_task(find_vpid(pid), PIDTYPE_PID);
+	if (!task)
+		return -EINVAL;
+
 	return len;
 }
 
