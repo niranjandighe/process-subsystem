@@ -5,6 +5,7 @@
 #include<linux/seq_file.h>
 #include<asm/uaccess.h>
 #include<linux/sched.h>
+#include<linux/list.h>
 
 MODULE_LICENSE("GPL");
 
@@ -14,12 +15,21 @@ static struct task_struct *task;
 
 static ssize_t info_show(struct seq_file *m, void *data)
 {
+	struct task_struct *tmp;
+
 	if (!pid || !task) {
 		seq_printf(m, "Please enter a valid PID\n");
 		return 0;
 	}
 
 	seq_printf(m, "Task: %s\n", task->comm);
+	seq_printf(m, "Task hierarchy\n");
+	seq_printf(m, "Parent: %s\n", task->parent->comm);
+	seq_printf(m, "Siblings: ");
+
+	list_for_each_entry(tmp, &task->children, sibling)
+		seq_printf(m, "%s ", tmp->comm);
+	seq_printf(m, "\n");
 
 	return 0;
 }
