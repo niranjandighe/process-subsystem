@@ -25,7 +25,7 @@ static ssize_t info_show(struct seq_file *m, void *data)
 	seq_printf(m, "Task: %s\n", task->comm);
 	seq_printf(m, "Task hierarchy\n");
 	seq_printf(m, "Parent: %s\n", task->parent->comm);
-	seq_printf(m, "Siblings: ");
+	seq_printf(m, "Children: ");
 
 	list_for_each_entry(tmp, &task->children, sibling)
 		seq_printf(m, "%s ", tmp->comm);
